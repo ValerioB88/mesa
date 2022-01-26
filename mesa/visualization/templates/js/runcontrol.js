@@ -80,7 +80,10 @@ function ModelController(tick = 0, fps = 3, running = false, finished = false) {
      * @param {any[]} data Model state data passed to the visualization elements
      */
     this.render = function render(data) {
-        vizElements.forEach((element, index) => element.render(data[index]))
+        if (document.getElementById("global_renderer").checked) {
+           vizElements.forEach((element, index) => element.render(data[index]));
+        }
+
         if (this.running) {
             this.timeout = setTimeout(() => this.step(), 1000 / this.fps);
         }
