@@ -24,7 +24,7 @@ const stepDisplay = document.getElementById("currentStep");
  * @param  {boolean} running=false - Initialize the model in a running state?
  * @param  {boolean} finished=false - Initialize the model in a finished state?
  */
-function ModelController(tick = 0, fps = 3, running = false, finished = false) {
+function ModelController(tick = 0, fps = 100, running = false, finished = false) {
     this.tick = tick;
     this.fps = fps;
     this.running = running;
@@ -50,14 +50,14 @@ function ModelController(tick = 0, fps = 3, running = false, finished = false) {
      * after the visualization elements are rendered. */
     this.step = function step() {
         this.tick += 1;
-        stepDisplay.innerText = this.tick;
+        // stepDisplay.innerText = this.tick;
         send({ type: "get_step", step: this.tick });
     }
 
     /** Reset the model and visualization state but keep its running state */
     this.reset = function reset() {
         this.tick = 0;
-        stepDisplay.innerText = this.tick;
+        // stepDisplay.innerText = this.tick;
         // Reset all the visualizations
         vizElements.forEach(element => element.reset());
         if (this.finished) {
@@ -102,12 +102,12 @@ function ModelController(tick = 0, fps = 3, running = false, finished = false) {
  * Set up the the FPS control
  */
 const fpsControl = $("#fps").slider({
-    max: 20,
+    max: 1000,
     min: 0,
     value: controller.fps,
-    ticks: [0, 20],
-    ticks_labels: [0, 20],
-    ticks_position: [0, 100]
+    ticks: [0, 1000],
+    ticks_labels: [0, 1000],
+    ticks_position: [0, 1000]
 });
 fpsControl.on("change", () => controller.updateFPS(fpsControl.val()));
 
@@ -158,7 +158,7 @@ ws.onmessage = function (message) {
         case "model_params":
             // Create GUI elements for each model parameter and reset everything
             initGUI(msg["params"]);
-            controller.reset();
+           // controller.reset();
             break;
         default:
             // There shouldn't be any other message
