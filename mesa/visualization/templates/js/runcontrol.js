@@ -14,6 +14,7 @@ const vizElements = [];
 const startModelButton = document.getElementById("play-pause");
 const stepModelButton = document.getElementById("step");
 const resetModelButton = document.getElementById("reset");
+const closeSocketButton = document.getElementById("close-socket");
 const stepDisplay = document.getElementById("currentStep");
 
 
@@ -128,6 +129,10 @@ stepModelButton.onclick = () => {
     }
 };
 resetModelButton.onclick = () => controller.reset();
+
+closeSocketButton.onclick = () => {
+    send({type: "close-socket"});
+}
 
 /*
  * Websocket opening and message handling

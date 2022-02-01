@@ -212,6 +212,9 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
             self.application.reset_model()
             self.write_message(self.viz_state_message)
 
+        elif msg["type"] == "close-socket":
+            self.application.model.stop()
+
         elif msg["type"] == "model_attrib":
             print("Value Received")
             self.application.model.__setattr__(msg["param"], eval(msg["value"]))
@@ -281,7 +284,7 @@ class ModularServer(tornado.web.Application):
     """Main visualization application."""
 
     verbose = True
-
+    event_loop = None
     port = int(os.getenv("PORT", 8521))  # Default port to listen on
     max_steps = 100000
 
@@ -368,7 +371,7 @@ class ModularServer(tornado.web.Application):
             else:
                 model_params[key] = val
 
-        self.model = self.model_cls(**deepcopy(model_params))
+        self.model = self.model_cls(**deepcopy(model_params), server_model=self)
 
     def render_model(self):
         """Turn the current state of the model into a dictionary of
@@ -383,14 +386,13 @@ class ModularServer(tornado.web.Application):
 
     def launch(self, port=None, open_browser=True):
         """Run the app."""
-        global SERVER
         if port is not None:
             self.port = port
         url = f"http://127.0.0.1:{self.port}"
         print(f"Interface starting at {url}")
         self.listen(self.port)
-        SERVER = tornado.ioloop.IOLoop.current()
+        self.event_loop = tornado.ioloop.IOLoop.current()
         if open_browser:
             webbrowser.open(url)
         # tornado.autoreload.start()
-        SERVER.start()
+        self.event_loop.start()
