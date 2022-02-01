@@ -257,6 +257,24 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
             if self.application.verbose:
                 print("Unexpected message!")
 
+from tornado.web import HTTPError
+class MyStaticFileHandler(tornado.web.StaticFileHandler):
+    def initialize(self, model, path: str, default_filename = None) -> None:
+        self.root = path
+        self.default_filename = default_filename
+        self.model = model
+
+    def validate_absolute_path(self, root: str, absolute_path: str):
+        try:
+            return super().validate_absolute_path(root, absolute_path)
+        except tornado.web.HTTPError:
+            import re
+            import evoagent.visualize as vis
+            id = int(re.findall(r'id(\d+).svg', absolute_path)[0])
+            vis.draw_net(self.model.config, self.model.schedule._agents[id].genome, view=False, filename=self.model.net_svg_folder + f'id{self.model.schedule._agents[id].unique_id}')
+            return super().validate_absolute_path(root, absolute_path)
+
+
 
 class ModularServer(tornado.web.Application):
     """Main visualization application."""
@@ -314,6 +332,12 @@ class ModularServer(tornado.web.Application):
         self.model_kwargs = model_params
         self.reset_model()
 
+        self.svg_image_handler = (
+            r"/images/(.*)",
+            MyStaticFileHandler,
+            {"model": self.model, "path": f'./{self.model.net_svg_folder}'}
+        )
+        self.handlers.append(self.svg_image_handler)
         # Initializing the application itself:
         super().__init__(self.handlers, **self.settings)
 
