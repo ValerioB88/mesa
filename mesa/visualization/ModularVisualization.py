@@ -211,6 +211,35 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
             self.application.reset_model()
             self.write_message(self.viz_state_message)
 
+        elif msg["type"] == "model_attrib":
+            print("Value Received")
+            self.application.model.__setattr__(msg["param"], eval(msg["value"]))
+        elif msg["type"] == "command":
+            m = self.application.model
+            agents = m.schedule.agents
+            def find_pop_idx_from_id():
+                for idx, a in enumerate(agents):
+                    if a.unique_id == m.selected_agent_unique_id:
+                        break
+                return idx
+            if msg["command"] == "next":
+                idx = find_pop_idx_from_id()
+                idx = 0 if idx+1 > len(agents) - 1 else idx+1
+                m.selected_agent_unique_id = agents[idx].unique_id
+            if msg["command"] == "previous":
+                idx = find_pop_idx_from_id()
+                idx = len(agents)-1 if idx+-1 < 0 else idx-1
+                m.selected_agent_unique_id = agents[idx].unique_id
+            if msg["command"] == "kill":
+                idx = find_pop_idx_from_id()
+                agents[idx].die()
+            if msg["command"] == "offspring":
+                idx = find_pop_idx_from_id()
+                agents[idx].reproduce_asexual()
+            if msg["command"] == "save":
+                self.application.model.save_model_state()
+
+
         elif msg["type"] == "submit_params":
             param = msg["param"]
             value = msg["value"]
