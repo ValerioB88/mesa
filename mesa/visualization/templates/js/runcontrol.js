@@ -187,7 +187,7 @@ const send = function (message) {
  */
 const initGUI = function (model_params) {
 
-    const sidebar = $("#sidebar");
+    const sidebar = $("#sidebarLeft");
 
     var onSubmitCallback = function (param_name, value) {
         send({ "type": "submit_params", "param": param_name, "value": value });
