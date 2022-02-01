@@ -105,6 +105,7 @@ import tornado.websocket
 import tornado.escape
 import tornado.gen
 import webbrowser
+from copy import deepcopy
 
 from mesa.visualization.UserParam import UserSettableParameter
 
@@ -116,7 +117,7 @@ from mesa.visualization.UserParam import UserSettableParameter
 if platform.system() == "Windows" and platform.python_version_tuple() >= ("3", "7"):
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-
+SERVER = None
 class VisualizationElement:
     """
     Defines an element of the visualization.
@@ -305,8 +306,10 @@ class ModularServer(tornado.web.Application):
     EXCLUDE_LIST = ("width", "height")
 
     def __init__(
-        self, model_cls, visualization_elements, name="Mesa Model", model_params={}
+        self, model_cls, visualization_elements, name="Mesa Model", model_params=None, verbose=True
     ):
+        if not model_params:
+            model_params = {}
         """Create a new visualization server with the given elements."""
         # Prep visualization elements:
         self.visualization_elements = visualization_elements
@@ -340,6 +343,7 @@ class ModularServer(tornado.web.Application):
         self.handlers.append(self.svg_image_handler)
         # Initializing the application itself:
         super().__init__(self.handlers, **self.settings)
+        self.verbose = verbose
 
     @property
     def user_params(self):
@@ -364,7 +368,7 @@ class ModularServer(tornado.web.Application):
             else:
                 model_params[key] = val
 
-        self.model = self.model_cls(**model_params)
+        self.model = self.model_cls(**deepcopy(model_params))
 
     def render_model(self):
         """Turn the current state of the model into a dictionary of
@@ -379,12 +383,14 @@ class ModularServer(tornado.web.Application):
 
     def launch(self, port=None, open_browser=True):
         """Run the app."""
+        global SERVER
         if port is not None:
             self.port = port
         url = f"http://127.0.0.1:{self.port}"
         print(f"Interface starting at {url}")
         self.listen(self.port)
+        SERVER = tornado.ioloop.IOLoop.current()
         if open_browser:
             webbrowser.open(url)
-        tornado.autoreload.start()
-        tornado.ioloop.IOLoop.current().start()
+        # tornado.autoreload.start()
+        SERVER.start()
