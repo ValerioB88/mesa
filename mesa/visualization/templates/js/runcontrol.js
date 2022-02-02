@@ -51,14 +51,14 @@ function ModelController(tick = 0, fps = 100, running = false, finished = false)
      * after the visualization elements are rendered. */
     this.step = function step() {
         this.tick += 1;
-        // stepDisplay.innerText = this.tick;
+        stepDisplay.innerText = this.tick;
         send({ type: "get_step", step: this.tick });
     }
 
     /** Reset the model and visualization state but keep its running state */
     this.reset = function reset() {
         this.tick = 0;
-        // stepDisplay.innerText = this.tick;
+        stepDisplay.innerText = this.tick;
         // Reset all the visualizations
         vizElements.forEach(element => element.reset());
         if (this.finished) {
@@ -96,6 +96,8 @@ function ModelController(tick = 0, fps = 100, running = false, finished = false)
      */
     this.updateFPS = function (val) {
         this.fps = Number(val);
+        fpsControl.value = val
+        document.getElementById("fps").value = val
     }
 }
 
