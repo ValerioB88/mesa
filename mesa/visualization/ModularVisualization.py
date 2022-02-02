@@ -262,7 +262,12 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
                 print("Unexpected message!")
 
 from tornado.web import HTTPError
-class MyStaticFileHandler(tornado.web.StaticFileHandler):
+class NoCacheStaticFileHandler(tornado.web.StaticFileHandler):
+    def set_extra_headers(self, path):
+        # Disable cache
+        self.set_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+
+class ImageStaticFileHandler(tornado.web.StaticFileHandler):
     def initialize(self, model, path: str, default_filename = None) -> None:
         self.root = path
         self.default_filename = default_filename
@@ -293,15 +298,15 @@ class ModularServer(tornado.web.Application):
     socket_handler = (r"/ws", SocketHandler)
     static_handler = (
         r"/static/(.*)",
-        tornado.web.StaticFileHandler,
+        NoCacheStaticFileHandler,
         {"path": os.path.dirname(__file__) + "/templates"},
     )
-    local_handler = (r"/local/(.*)", tornado.web.StaticFileHandler, {"path": ""})
+    local_handler = (r"/local/(.*)", NoCacheStaticFileHandler, {"path": ""})
 
     handlers = [page_handler, socket_handler, static_handler, local_handler]
 
     settings = {
-        "debug": True,
+        "debug": False,
         "autoreload": False,
         "template_path": os.path.dirname(__file__) + "/templates",
     }
@@ -334,13 +339,14 @@ class ModularServer(tornado.web.Application):
             self.description = model_cls.description
         elif model_cls.__doc__ is not None:
             self.description = model_cls.__doc__
+        self.handlers = [self.page_handler, self.socket_handler, self.static_handler, self.local_handler]
 
         self.model_kwargs = model_params
         self.reset_model()
 
         self.svg_image_handler = (
             r"/images/(.*)",
-            MyStaticFileHandler,
+            ImageStaticFileHandler,
             {"model": self.model, "path": f'./{self.model.net_svg_folder}'}
         )
         self.handlers.append(self.svg_image_handler)
